@@ -30,6 +30,7 @@ foreach ($archivo in $archivosJSON) {
         Description = "Usuario creado por script de procesamiento"
         AccountPassword = $contrasenaSegura
         Enabled = $true
+        ChangePasswordAtLogon = $true
     }
     New-ADUser @params
 
