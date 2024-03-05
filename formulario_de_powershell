@@ -1,0 +1,47 @@
+#Este script debería de transformarse a un archivo ejecutable para que no tengan complicaciones al lanzarlo nuestros compañeros de RRHH.
+
+# Script para recopilar información del empleado
+
+# Solicitar información al usuario
+$nombre = Read-Host "Ingrese su Nombre"
+$apellidos = Read-Host "Ingrese sus Apellidos"
+$nombreMostrar = Read-Host "Ingrese su Nombre para Mostrar en Pantalla/Nombre de usuario"
+$correo = Read-Host "Ingrese su Correo Electrónico Personal"
+$telefono = Read-Host "Ingrese su Teléfono"
+
+# Mostrar opciones para el sector
+$sectores = @("Administración", "Comercial", "Compras", "Desarrollo", "Dirección", "Diseño", "Marketing", "RRHH", "Soporte_IT")
+$sector = $null
+while ($sector -eq $null) {
+    Write-Host "Seleccione su sector:"
+    for ($i = 0; $i -lt $sectores.Count; $i++) {
+        Write-Host "$($i+1). $($sectores[$i])"
+    }
+    $opcion = Read-Host "Ingrese el número correspondiente al sector"
+    if ($opcion -ge 1 -and $opcion -le $sectores.Count) {
+        $sector = $sectores[$opcion - 1]
+    } else {
+        Write-Host "Opción no válida. Inténtelo de nuevo."
+    }
+}
+
+# Crear un objeto con la información
+$informacionEmpleado = @{
+    Nombre = $nombre
+    Apellidos = $apellidos
+    NombreMostrar = $nombreMostrar
+    Correo = $correo
+    Telefono = $telefono
+    Sector = $sector
+}
+
+# Convertir el objeto a formato JSON
+$jsonEmpleado = $informacionEmpleado | ConvertTo-Json
+
+# Script para recopilar información del empleado y guardarla en un archivo JSON
+
+# Guardar el JSON en un archivo en la carpeta compartida
+$rutaCompartida = "Ruta carpeta caliente compartida server"
+$jsonEmpleado | Out-File -FilePath "$rutaCompartida\InfoEmpleado.json" -Encoding UTF8
+
+Write-Host "Información del empleado guardada exitosamente en $rutaCompartida."
