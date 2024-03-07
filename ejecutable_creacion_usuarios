@@ -1,16 +1,11 @@
-#Recuerda repasar el script y ajustarlo a las necesidades de tu empresa.
-
-# Ruta de la carpeta "caliente"
-$rutaCaliente = "Ruta\carpeta\caliente"
+# Recuerda escribir las rutas ajustándolas a las necesidades de tu equipo
+$rutaCaliente = "Ruta carpeta caliente"
 
 # Ruta de la carpeta de respaldo
-$rutaRespaldo = "Ruta\carpeta\backup"
+$rutaRespaldo = "Ruta carpeta de respaldo"
 
-# Obtener todos los archivos JSON en la carpeta caliente
-$archivosJSON = Get-ChildItem -Path $rutaCaliente -Filter *.json
-
-# Acciones de procesamiento de datos de empleados
-foreach ($archivo in $archivosJSON) {
+# Función para procesar el archivo JSON
+function ProcesarArchivoJSON($archivo) {
     # Leer el contenido del archivo JSON
     $jsonContenido = Get-Content -Path $archivo.FullName | ConvertFrom-Json
 
@@ -21,7 +16,7 @@ foreach ($archivo in $archivosJSON) {
     # Configurar información adicional del usuario
     $params = @{
         SamAccountName = $nuevoUsuario
-        UserPrincipalName = "$nuevoUsuario@andel.local" #Ajusta este apartado a tu dominio
+        UserPrincipalName = "$nuevoUsuario@andel.local" # Ajusta este apartado a tu dominio
         Name = $nuevoUsuario
         GivenName = $jsonContenido.Nombre
         Surname = $jsonContenido.Apellidos
@@ -43,12 +38,40 @@ foreach ($archivo in $archivosJSON) {
     # Otras acciones de procesamiento, si es necesario
 
     # Obtener el nombre del archivo de respaldo con el nuevo usuario
-    $nombreArchivoRespaldo = "$rutaRespaldo\$nuevoUsuario+$archivo"
+    $nombreArchivoRespaldo = "$rutaRespaldo\$nuevoUsuario+$($archivo.Name)"
 
     # Mover el archivo a la carpeta de respaldo con el nombre modificado
     Move-Item -Path $archivo.FullName -Destination $nombreArchivoRespaldo -Force
 }
 
-Write-Host "Procesamiento completado."
+# Crear un objeto para el watcher (vigilante) de la carpeta caliente
+$watcher = New-Object System.IO.FileSystemWatcher
+$watcher.Path = $rutaCaliente
 
-Get-Content "Ruta\carpeta\backup" #Simplemente es para comprobar
+# Especificar el tipo de cambios que deseas monitorear
+$watcher.NotifyFilter = [System.IO.NotifyFilters]::FileName -bor [System.IO.NotifyFilters]::LastWrite
+
+# Evento que se activará cuando haya cambios en la carpeta
+$action = {
+    foreach ($evento in $eventArgs) {
+        $nombreArchivo = $evento.Name
+        $rutaCompleta = $evento.FullPath
+
+        if ($nombreArchivo -match '\.json$') {
+            Write-Host "Se añadió un archivo .json: $nombreArchivo"
+            ProcesarArchivoJSON (Get-Item $rutaCompleta)
+        }
+    }
+}
+
+# Asociar el evento al watcher
+Register-ObjectEvent $watcher "Created" -Action $action
+
+# Iniciar la vigilancia
+$watcher.EnableRaisingEvents = $true
+
+Write-Host "El script está vigilando la carpeta. Presiona Ctrl+C para detener."
+# Mantener el script en ejecución para que continúe vigilando la carpeta
+while ($true) {
+    Start-Sleep -Seconds 1
+}
