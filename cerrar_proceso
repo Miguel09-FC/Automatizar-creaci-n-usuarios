@@ -1,0 +1,17 @@
+# Nombre del proceso (.exe) que deseas detener
+$nombreProceso = "Nombre del proceso"  #Tienes que mirar en el administrador de tareas como se llama el proceso de creación de usuarios que normalmente es el mismo nombre que el archivo ejecutable de creación de usuarios.
+
+# Obtener todos los procesos con el nombre especificado
+$procesos = Get-Process | Where-Object { $_.ProcessName -eq $nombreProceso }
+
+# Verificar si hay procesos para detener
+if ($procesos.Count -gt 0) {
+    # Detener cada instancia del proceso
+    foreach ($proceso in $procesos) {
+        Stop-Process -Id $proceso.Id -Force
+        Write-Host "Se detuvo el proceso: $($proceso.ProcessName) (ID: $($proceso.Id))"
+    }
+} else {
+    Write-Host "No se encontraron instancias del proceso $nombreProceso en ejecución."
+}
+
